@@ -1,21 +1,21 @@
-# dxf2pdf（DXF 转 PDF 工具包）
+# dxf2pdf (DXF to PDF Toolkit)
 
-## 语言 / Language
+## Language / 语言
 
-- 中文
-- [English](./README.en.md)
+- English
+- [中文](./README.md)
 
-一个用于将 `.dxf` CAD 图纸转换为 PDF 的轻量工具包，采用 Python 命令行工作流（不依赖双击启动脚本）。支持单文件与批量转换，并内置中文 MTEXT 的碰撞触发换行优化，用于减少相邻标签重叠。
+A lightweight toolkit for converting `.dxf` CAD drawings to PDF using Python scripts (command-line workflow). It supports both single-file and batch conversion and includes collision-triggered wrapping for dense Chinese MTEXT labels.
 
-## 功能
+## Features
 
-- 单文件 DXF 转 PDF
-- 批量转换文件夹
-- 命令行工作流（不依赖 `.command` / `.bat`）
-- 中文 MTEXT 碰撞触发换行（减少相邻标签横向重叠）
-- 仓库默认不包含业务数据（使用 `data/input`、`data/output`）
+- Single-file DXF to PDF conversion
+- Batch conversion for folders
+- Command-line workflow (no launcher dependency)
+- Collision-triggered wrapping for Chinese MTEXT labels (reduces overlap between adjacent labels)
+- Data-free repository structure (`data/input`, `data/output`)
 
-## 目录结构
+## Project Structure
 
 ```text
 dxf-to-pdf-toolkit/
@@ -24,17 +24,17 @@ dxf-to-pdf-toolkit/
 ├── .gitignore
 ├── requirements.txt
 ├── data/
-│   ├── input/                  # 默认批量输入目录
-│   └── output/                 # 默认批量输出目录
+│   ├── input/                  # Default batch input folder
+│   └── output/                 # Default batch output folder
 └── scripts/
-    ├── check_env.py            # 环境检测
-    ├── cad_to_pdf.py           # 单文件 DXF -> PDF
-    └── batch_cad_to_pdf.py     # 批量 DXF -> PDF
+    ├── check_env.py            # Environment check
+    ├── cad_to_pdf.py           # Single-file DXF -> PDF
+    └── batch_cad_to_pdf.py     # Batch DXF -> PDF
 ```
 
-## 快速开始（macOS / Linux）
+## Quick Start (macOS / Linux)
 
-### 1. 创建虚拟环境并安装依赖
+### 1. Create and activate virtual environment
 
 ```bash
 cd /path/to/dxf-to-pdf-toolkit
@@ -43,13 +43,13 @@ python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
 
-### 2. 可选：环境检测
+### 2. Optional environment check
 
 ```bash
 ./.venv/bin/python scripts/check_env.py
 ```
 
-### 3. 批量转换（默认数据目录）
+### 3. Batch convert (default data folders)
 
 ```bash
 ./.venv/bin/python scripts/batch_cad_to_pdf.py \
@@ -64,7 +64,7 @@ python3 -m venv .venv
   --force
 ```
 
-### 4. 单文件转换
+### 4. Single-file convert
 
 ```bash
 ./.venv/bin/python scripts/cad_to_pdf.py \
@@ -79,9 +79,9 @@ python3 -m venv .venv
   --force
 ```
 
-## 快速开始（Windows CMD）
+## Quick Start (Windows CMD)
 
-### 1. 创建虚拟环境并安装依赖
+### 1. Create virtual environment and install dependencies
 
 ```bat
 cd /d C:\path\to\dxf-to-pdf-toolkit
@@ -90,27 +90,27 @@ py -3 -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
 ```
 
-如果没有 `py`，可以把 `py -3` 改成 `python`。
+If `py` is not available, replace `py -3` with `python`.
 
-### 2. 可选：环境检测
+### 2. Optional environment check
 
 ```bat
 .\.venv\Scripts\python scripts\check_env.py
 ```
 
-### 3. 批量转换（默认数据目录）
+### 3. Batch convert (default data folders)
 
 ```bat
 .\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
 ```
 
-### 4. 单文件转换
+### 4. Single-file convert
 
 ```bat
 .\.venv\Scripts\python scripts\cad_to_pdf.py "C:\path\to\file.dxf" -o "C:\path\to\file.pdf" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
 ```
 
-## 快速开始（Windows PowerShell）
+## Quick Start (Windows PowerShell)
 
 ```powershell
 cd C:\path\to\dxf-to-pdf-toolkit
@@ -120,28 +120,28 @@ py -3 -m venv .venv
 .\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
 ```
 
-## 默认转换参数（推荐）
+## Default Conversion Settings (Recommended)
 
-这些参数是针对配电/单线图类标注较密场景做的优化：
+These options are tuned for dense single-line / distribution diagrams:
 
 - `--layout modelspace`
-- `--bg "#FFFFFF" --fg "#000000"`（白底黑线）
+- `--bg "#FFFFFF" --fg "#000000"` (white background, black foreground)
 - `--mtext-line-spacing-scale 1.15`
 - `--mtext-smart-wrap-cjk-collision`
 - `--mtext-smart-wrap-cjk-chars 10`
 
-说明：
-- 仅在检测到同排邻近文字可能横向重叠时才换行。
-- 不会对所有文字做全局强制换行。
+Note:
+- Wrapping is only applied when same-row nearby labels are likely to collide.
+- It is not a global forced wrap.
 
-## 批量常用参数
+## Useful Batch Options
 
-- `--skip-existing`：跳过已生成的 PDF
-- `--limit 10`：只处理前 10 个文件
-- `--match 桂花`：只处理路径包含关键词的文件
-- `--size-inches 11x17`：指定画布尺寸
+- `--skip-existing` Skip existing PDFs
+- `--limit 10` Convert only the first 10 files
+- `--match 桂花` Convert only files whose path contains the keyword
+- `--size-inches 11x17` Set canvas size
 
-示例：
+Examples:
 
 ```bash
 ./.venv/bin/python scripts/batch_cad_to_pdf.py "./data/input" -o "./data/output" --match 桂花 --skip-existing --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
@@ -151,19 +151,19 @@ py -3 -m venv .venv
 ./.venv/bin/python scripts/batch_cad_to_pdf.py "./data/input" -o "./data/output" --limit 10 --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
 ```
 
-## 输出结果
+## Outputs
 
-- 单文件模式：默认输出同名 `.pdf`（或你指定的 `-o` 路径）
-- 批量模式：PDF 输出到目标输出目录
-- 批量模式会同时生成汇总 JSON：
+- Single-file mode: same-name `.pdf` by default (or your `-o` path)
+- Batch mode: PDFs written to the output folder
+- Batch mode also writes a summary JSON:
   - `cad2pdf_batch_summary_YYYYMMDD_HHMMSS.json`
 
-## 上传到 GitHub（不上传数据）
+## Publishing to GitHub (No Data)
 
-- 不要提交 `data/input/`、`data/output/`、`.venv/`
-- 只提交工具代码和文档
+- Do not commit `data/input/`, `data/output/`, or `.venv/`
+- Keep only the toolkit code and documentation
 
-常见命令：
+Typical commands:
 
 ```bash
 git init
@@ -171,8 +171,8 @@ git add README.md README.en.md .gitignore requirements.txt scripts/ data/input/.
 git commit -m "Add DXF to PDF toolkit"
 ```
 
-## 已知限制
+## Known Limitations
 
-- 目前直接稳定支持 `.dxf`；`.dwg` 建议先转换为 `.dxf`
-- 非原生 CAD 渲染器下，中文字体/标注可能仍有差异
-- 若依赖 CTB/STB 严格出图样式，建议使用原生 CAD 软件导出 PDF
+- Stable direct support is for `.dxf`; convert `.dwg` to `.dxf` first
+- Font metrics (especially some Chinese CAD fonts) may differ from native CAD renderers
+- If strict CTB/STB plotting fidelity is required, export PDF from native CAD software
