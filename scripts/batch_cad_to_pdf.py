@@ -133,6 +133,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Foreground color hex (default: #000000)",
     )
     parser.add_argument(
+        "--font-family",
+        help=(
+            "Preferred matplotlib font family (or comma-separated fallbacks) for text "
+            "rendering, e.g. 'Microsoft YaHei,SimSun'."
+        ),
+    )
+    parser.add_argument(
+        "--font-file",
+        help=(
+            "Path to a TTF/OTF/TTC font file to register before export. "
+            "Use with --font-family if family detection fails."
+        ),
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Overwrite existing PDFs",
@@ -180,6 +194,7 @@ def main() -> int:
 
     stats = Stats(total=len(files))
     failures: list[dict] = []
+    font_file = Path(args.font_file).expanduser() if args.font_file else None
 
     print(f"Input folder: {input_dir}")
     print(f"Output folder: {output_dir}")
@@ -232,6 +247,8 @@ def main() -> int:
             mtext_smart_wrap_cjk_chars=args.mtext_smart_wrap_cjk_chars,
             bg=args.bg,
             fg=args.fg,
+            font_family=args.font_family,
+            font_file=font_file,
             force=args.force,
         )
         if rc == 0:

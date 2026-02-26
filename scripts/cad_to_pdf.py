@@ -76,6 +76,121 @@ def ensure_dxf_dependencies():
     return ezdxf, ezdxf_mpl
 
 
+def parse_font_family_list(spec: Optional[str]) -> list[str]:
+    if not spec:
+        return []
+    names: list[str] = []
+    for part in spec.replace(";", ",").split(","):
+        name = part.strip()
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def default_cjk_font_families() -> list[str]:
+    if sys.platform.startswith("win"):
+        return [
+            "Microsoft YaHei",
+            "SimHei",
+            "SimSun",
+            "NSimSun",
+            "KaiTi",
+            "FangSong",
+        ]
+    if sys.platform == "darwin":
+        return [
+            "PingFang SC",
+            "Hiragino Sans GB",
+            "STHeiti",
+            "Heiti SC",
+            "Songti SC",
+        ]
+    return [
+        "Noto Sans CJK SC",
+        "WenQuanYi Zen Hei",
+        "AR PL UKai CN",
+        "AR PL UMing CN",
+    ]
+
+
+def configure_matplotlib_fonts(
+    *,
+    font_family_spec: Optional[str],
+    font_file: Optional[Path],
+) -> None:
+    requested = parse_font_family_list(font_family_spec)
+    auto_fallback = False
+
+    if not requested and font_file is None and sys.platform.startswith("win"):
+        requested = default_cjk_font_families()
+        auto_fallback = True
+
+    if not requested and font_file is None:
+        return
+
+    try:
+        import matplotlib  # type: ignore
+        from matplotlib import font_manager  # type: ignore
+    except ImportError as exc:  # pragma: no cover - runtime environment dependent
+        raise RuntimeError(INSTALL_HINT) from exc
+
+    if font_file is not None:
+        resolved = Path(font_file).expanduser()
+        if not resolved.is_file():
+            raise ValueError(f"Font file not found: {resolved}")
+        try:
+            font_manager.fontManager.addfont(str(resolved))
+        except Exception as exc:
+            raise ValueError(f"Failed to load font file: {resolved} ({exc})") from exc
+
+        try:
+            loaded_name = font_manager.FontProperties(fname=str(resolved)).get_name()
+        except Exception:
+            loaded_name = ""
+        if loaded_name and loaded_name not in requested:
+            requested.insert(0, loaded_name)
+        elif not requested:
+            raise ValueError(
+                "Unable to determine font family name from --font-file. "
+                "Please also pass --font-family."
+            )
+
+    if not requested:
+        return
+
+    existing_sans = matplotlib.rcParams.get("font.sans-serif", [])
+    if isinstance(existing_sans, str):
+        existing_sans_list = [existing_sans]
+    else:
+        existing_sans_list = [str(name) for name in existing_sans]
+
+    merged: list[str] = []
+    for name in requested + existing_sans_list:
+        if name and name not in merged:
+            merged.append(name)
+
+    matplotlib.rcParams["font.family"] = ["sans-serif"]
+    matplotlib.rcParams["font.sans-serif"] = merged
+    matplotlib.rcParams["axes.unicode_minus"] = False
+
+    installed_names = {entry.name for entry in font_manager.fontManager.ttflist}
+    matched = [name for name in requested if name in installed_names]
+
+    if auto_fallback:
+        print(f"Auto font fallback (Windows): {', '.join(requested)}")
+    else:
+        print(f"Matplotlib font preference: {', '.join(requested)}")
+
+    if matched:
+        print(f"Matplotlib font matches: {', '.join(matched)}")
+    else:
+        print(
+            "Warning: None of the requested fonts were found by matplotlib. "
+            "Chinese text may not render correctly. Try --font-family or --font-file.",
+            file=sys.stderr,
+        )
+
+
 def list_layouts(doc) -> list[str]:
     names = []
     for name in doc.layout_names_in_taborder():
@@ -215,6 +330,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Foreground color override for ACI=7 (requires --bg; hex only, e.g. #000000)",
     )
     parser.add_argument(
+        "--font-family",
+        help=(
+            "Preferred matplotlib font family (or comma-separated fallbacks) for text "
+            "rendering, e.g. 'Microsoft YaHei,SimSun'."
+        ),
+    )
+    parser.add_argument(
+        "--font-file",
+        help=(
+            "Path to a TTF/OTF/TTC font file to register before export. "
+            "Use with --font-family if family detection fails."
+        ),
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Overwrite an existing output PDF",
@@ -237,6 +366,8 @@ def convert_dxf(
     mtext_smart_wrap_cjk_chars: int,
     bg: Optional[str],
     fg: Optional[str],
+    font_family: Optional[str],
+    font_file: Optional[Path],
     force: bool,
 ) -> int:
     ezdxf, ezdxf_mpl = ensure_dxf_dependencies()
@@ -298,6 +429,14 @@ def convert_dxf(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     effective_bg = "#FFFFFF" if bg is None else bg
+    try:
+        configure_matplotlib_fonts(
+            font_family_spec=font_family,
+            font_file=font_file,
+        )
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 4
     try:
         ezdxf_mpl.qsave(
             layout,
@@ -612,6 +751,8 @@ def main() -> int:
             mtext_smart_wrap_cjk_chars=args.mtext_smart_wrap_cjk_chars,
             bg=args.bg,
             fg=args.fg,
+            font_family=args.font_family,
+            font_file=(Path(args.font_file).expanduser() if args.font_file else None),
             force=args.force,
         )
     except RuntimeError as exc:

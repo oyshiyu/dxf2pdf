@@ -101,13 +101,13 @@ If `python` is not found, install Python and make sure it is added to `PATH`.
 ### 3. Batch convert (default data folders)
 
 ```bat
-.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
+.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
 ```
 
 ### 4. Single-file convert
 
 ```bat
-.\.venv\Scripts\python scripts\cad_to_pdf.py "C:\path\to\file.dxf" -o "C:\path\to\file.pdf" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
+.\.venv\Scripts\python scripts\cad_to_pdf.py "C:\path\to\file.dxf" -o "C:\path\to\file.pdf" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
 ```
 
 ## Quick Start (Windows PowerShell)
@@ -117,7 +117,7 @@ cd C:\path\to\dxf2pdf
 python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\pip install -r requirements.txt
-.\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
+.\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
 ```
 
 ## Default Conversion Settings (Recommended)
@@ -140,6 +140,8 @@ Note:
 - `--limit 10` Convert only the first 10 files
 - `--match 桂花` Convert only files whose path contains the keyword
 - `--size-inches 11x17` Set canvas size
+- `--font-family "Microsoft YaHei,SimSun"` Set preferred CJK font fallback order (common on Windows)
+- `--font-file "C:\Windows\Fonts\msyh.ttc"` Register a font file if matplotlib does not detect it
 
 Examples:
 
@@ -157,6 +159,28 @@ Examples:
 - Batch mode: PDFs written to the output folder
 - Batch mode also writes a summary JSON:
   - `cad2pdf_batch_summary_YYYYMMDD_HHMMSS.json`
+
+## Windows Chinese Font Rendering Issues (Troubleshooting)
+
+If Chinese text renders as missing glyphs, squares, blanks, or garbled characters on Windows, the root cause is usually font fallback (not necessarily a package version issue).
+
+- On Windows, the script now auto-tries common Chinese font fallbacks (`Microsoft YaHei`, `SimHei`, `SimSun`, etc.) when no font is specified
+- Export logs will print:
+  - `Auto font fallback (Windows): ...`
+  - `Matplotlib font matches: ...`
+- If output is still wrong, explicitly set font families:
+
+```bat
+.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
+```
+
+- If the font exists but matplotlib still does not pick it, register the font file directly (more reliable):
+
+```bat
+.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-file "C:\\Windows\\Fonts\\msyh.ttc" --font-family "Microsoft YaHei" --force
+```
+
+- If the drawing uses SHX fonts (instead of TTF/OTF), `ezdxf + matplotlib` may still differ from native CAD rendering
 
 ## Known Limitations
 

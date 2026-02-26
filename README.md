@@ -90,7 +90,7 @@ python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
 ```
 
-如果没有 `py`，可以把 `py -3` 改成 `python`。
+如果 `python` 不可用，请先安装 Python 并确保已加入 `PATH`。
 
 ### 2. 可选：环境检测
 
@@ -101,13 +101,13 @@ python -m venv .venv
 ### 3. 批量转换（默认数据目录）
 
 ```bat
-.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
+.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
 ```
 
 ### 4. 单文件转换
 
 ```bat
-.\.venv\Scripts\python scripts\cad_to_pdf.py "C:\path\to\file.dxf" -o "C:\path\to\file.pdf" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
+.\.venv\Scripts\python scripts\cad_to_pdf.py "C:\path\to\file.dxf" -o "C:\path\to\file.pdf" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
 ```
 
 ## 快速开始（Windows PowerShell）
@@ -117,7 +117,7 @@ cd C:\path\to\dxf2pdf
 python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\pip install -r requirements.txt
-.\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
+.\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
 ```
 
 ## 默认转换参数（推荐）
@@ -140,6 +140,8 @@ python -m venv .venv
 - `--limit 10`：只处理前 10 个文件
 - `--match 桂花`：只处理路径包含关键词的文件
 - `--size-inches 11x17`：指定画布尺寸
+- `--font-family "Microsoft YaHei,SimSun"`：指定中文字体优先级（Windows 常用）
+- `--font-file "C:\Windows\Fonts\msyh.ttc"`：注册字体文件（字体未被 matplotlib 识别时）
 
 示例：
 
@@ -157,6 +159,28 @@ python -m venv .venv
 - 批量模式：PDF 输出到目标输出目录
 - 批量模式会同时生成汇总 JSON：
   - `cad2pdf_batch_summary_YYYYMMDD_HHMMSS.json`
+
+## Windows 中文字体显示异常（常见排错）
+
+如果在 Windows 导出后出现中文缺字、方块、空白或乱码，通常是字体回退问题（不一定是版本问题）。
+
+- 脚本在 Windows 下会自动尝试常见中文字体回退（如 `Microsoft YaHei`、`SimHei`、`SimSun` 等）
+- 导出日志会打印：
+  - `Auto font fallback (Windows): ...`
+  - `Matplotlib font matches: ...`
+- 如果仍有问题，建议显式指定字体：
+
+```bat
+.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
+```
+
+- 如果字体存在但仍未被识别，直接指定字体文件（更稳）：
+
+```bat
+.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-file "C:\\Windows\\Fonts\\msyh.ttc" --font-family "Microsoft YaHei" --force
+```
+
+- 若图纸使用的是 SHX 字体（而不是 TTF/OTF），`ezdxf + matplotlib` 仍可能与原生 CAD 显示不一致
 
 ## 已知限制
 
