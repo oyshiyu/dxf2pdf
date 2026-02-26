@@ -1,6 +1,5 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-chcp 65001 >nul
 
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
@@ -58,7 +57,7 @@ echo   run_dxf_to_pdf.bat "C:\path\folder" "C:\path\output_folder"
 echo.
 echo Optional env vars:
 echo   set CAD2PDF_LIMIT=10
-echo   set CAD2PDF_MATCH=桂花
+echo   set CAD2PDF_MATCH=sample
 echo   set CAD2PDF_SKIP_EXISTING=1
 echo   set CAD2PDF_SMART_WRAP_CJK_CHARS=10
 goto :eof
@@ -68,11 +67,11 @@ if exist "%PYTHON_BIN%" goto :check_deps
 
 echo Creating local virtual environment...
 where py >nul 2>nul
-if %errorlevel%==0 (
+if not errorlevel 1 (
   py -3 -m venv "%VENV_DIR%"
 ) else (
   where python >nul 2>nul
-  if not %errorlevel%==0 (
+  if errorlevel 1 (
     echo ERROR: Python not found. Install Python 3 and re-run.
     exit /b 3
   )
@@ -152,7 +151,7 @@ if "%CAD2PDF_SKIP_EXISTING%"=="1" set "OPT_SKIP_OR_FORCE=--skip-existing"
 set "OPT_LIMIT="
 if defined CAD2PDF_LIMIT set "OPT_LIMIT=--limit %CAD2PDF_LIMIT%"
 set "OPT_MATCH="
-if defined CAD2PDF_MATCH set "OPT_MATCH=--match "%CAD2PDF_MATCH%""
+if defined CAD2PDF_MATCH set OPT_MATCH=--match "%CAD2PDF_MATCH%"
 set "OPT_SIZE="
 if defined CAD2PDF_SIZE_INCHES set "OPT_SIZE=--size-inches %CAD2PDF_SIZE_INCHES%"
 
