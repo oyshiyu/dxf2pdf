@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.cad2pdf-venv/
+
+# Data and generated outputs (keep folder structure, ignore contents)
+data/input/*
+data/output/*
+!data/input/.gitkeep
+!data/output/.gitkeep
+
+# CAD source/exports placed outside the default data folders
+*.dxf
+*.dwg
+*.bak
+
+# Generated PDFs and runtime summaries/logs
+*.pdf
+*.log
+cad2pdf_batch_summary_*.json
+**/cad2pdf_batch_summary_*.json
+
+# OS files
+.DS_Store
+Thumbs.db
