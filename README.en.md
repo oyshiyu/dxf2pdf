@@ -11,7 +11,6 @@ A lightweight toolkit for converting `.dxf` CAD drawings to PDF using Python scr
 
 - Single-file DXF to PDF conversion
 - Batch conversion for folders
-- Command-line workflow (no launcher dependency)
 - Collision-triggered wrapping for Chinese MTEXT labels (reduces overlap between adjacent labels)
 - Data-free repository structure (`data/input`, `data/output`)
 
@@ -140,7 +139,7 @@ Note:
 - `--limit 10` Convert only the first 10 files
 - `--match 桂花` Convert only files whose path contains the keyword
 - `--size-inches 11x17` Set canvas size
-- `--font-family "Microsoft YaHei,SimSun"` Set preferred CJK font fallback order (common on Windows)
+- `--font-family "Microsoft YaHei,SimSun"` Set preferred CJK font fallback order
 - `--font-file "C:\Windows\Fonts\msyh.ttc"` Register a font file if matplotlib does not detect it
 
 Examples:
@@ -159,28 +158,6 @@ Examples:
 - Batch mode: PDFs written to the output folder
 - Batch mode also writes a summary JSON:
   - `cad2pdf_batch_summary_YYYYMMDD_HHMMSS.json`
-
-## Windows Chinese Font Rendering Issues (Troubleshooting)
-
-If Chinese text renders as missing glyphs, squares, blanks, or garbled characters on Windows, the root cause is usually font fallback (not necessarily a package version issue).
-
-- On Windows, the script now auto-tries common Chinese font fallbacks (`Microsoft YaHei`, `SimHei`, `SimSun`, etc.) when no font is specified
-- Export logs will print:
-  - `Auto font fallback (Windows): ...`
-  - `Matplotlib font matches: ...`
-- If output is still wrong, explicitly set font families:
-
-```bat
-.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-family "Microsoft YaHei,SimSun,NSimSun" --force
-```
-
-- If the font exists but matplotlib still does not pick it, register the font file directly (more reliable):
-
-```bat
-.\.venv\Scripts\python scripts\batch_cad_to_pdf.py ".\\data\\input" -o ".\\data\\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --font-file "C:\\Windows\\Fonts\\msyh.ttc" --font-family "Microsoft YaHei" --force
-```
-
-- If the drawing uses SHX fonts (instead of TTF/OTF), `ezdxf + matplotlib` may still differ from native CAD rendering
 
 ## Known Limitations
 

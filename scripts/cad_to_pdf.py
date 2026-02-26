@@ -113,6 +113,51 @@ def default_cjk_font_families() -> list[str]:
     ]
 
 
+# Mapping from Chinese (localized) font names to actual font filenames that
+# ezdxf can resolve.  Keys are lowercase for case-insensitive matching.
+CJK_FONT_NAME_TO_FILE: dict[str, str] = {
+    "宋体": "simsun.ttc",
+    "新宋体": "simsun.ttc",
+    "黑体": "simhei.ttf",
+    "楷体": "simkai.ttf",
+    "仿宋": "simfang.ttf",
+    "微软雅黑": "msyh.ttc",
+    "等线": "Deng.ttf",
+    "华文宋体": "STSONG.TTF",
+    "华文黑体": "STZHONGSONG.TTF",
+    "华文楷体": "STKAITI.TTF",
+    "华文仿宋": "STFANGSO.TTF",
+    "华文中宋": "STZHONGS.TTF",
+    "方正舒体": "FZSTK.TTF",
+    "方正姚体": "FZYAOTI.TTF",
+    "隶书": "SIMLI.TTF",
+    "幼圆": "SIMYOU.TTF",
+}
+
+
+def remap_cjk_font_names_in_doc(doc) -> int:
+    """Replace Chinese font display names in DXF text styles with filenames
+    that ezdxf can resolve to actual system fonts.
+
+    Returns the number of styles remapped.
+    """
+    remapped = 0
+    for style in doc.styles:
+        font_name = getattr(style.dxf, "font", "")
+        if not font_name:
+            continue
+        mapped = CJK_FONT_NAME_TO_FILE.get(font_name)
+        if mapped is None:
+            # Try lowercase lookup
+            mapped = CJK_FONT_NAME_TO_FILE.get(font_name.lower())
+        if mapped is not None:
+            old_name = font_name
+            style.dxf.font = mapped
+            print(f"Font remap: style {style.dxf.name!r}: {old_name!r} -> {mapped!r}")
+            remapped += 1
+    return remapped
+
+
 def configure_matplotlib_fonts(
     *,
     font_family_spec: Optional[str],
@@ -401,6 +446,11 @@ def convert_dxf(
         return 4
 
     print(f"Using layout: {describe_layout(layout)}")
+
+    # Remap Chinese font names to filenames ezdxf can resolve
+    remapped = remap_cjk_font_names_in_doc(doc)
+    if remapped:
+        print(f"Remapped {remapped} text style(s) with CJK font names")
 
     adjusted_mtext, forced_wraps, smart_wraps = tune_mtext_for_export(
         layout,
