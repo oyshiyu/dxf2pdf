@@ -37,7 +37,7 @@ dxf-to-pdf-toolkit/
 ### 1. 创建虚拟环境并安装依赖
 
 ```bash
-cd /path/to/dxf-to-pdf-toolkit
+cd /path/to/dxf2pdf
 python3 -m venv .venv
 ./.venv/bin/python -m pip install --upgrade pip
 ./.venv/bin/pip install -r requirements.txt
@@ -84,8 +84,8 @@ python3 -m venv .venv
 ### 1. 创建虚拟环境并安装依赖
 
 ```bat
-cd /d C:\path\to\dxf-to-pdf-toolkit
-py -3 -m venv .venv
+cd /d C:\path\to\dxf2pdf
+python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\pip install -r requirements.txt
 ```
@@ -113,8 +113,8 @@ py -3 -m venv .venv
 ## 快速开始（Windows PowerShell）
 
 ```powershell
-cd C:\path\to\dxf-to-pdf-toolkit
-py -3 -m venv .venv
+cd C:\path\to\dxf2pdf
+python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\pip install -r requirements.txt
 .\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
@@ -157,19 +157,6 @@ py -3 -m venv .venv
 - 批量模式：PDF 输出到目标输出目录
 - 批量模式会同时生成汇总 JSON：
   - `cad2pdf_batch_summary_YYYYMMDD_HHMMSS.json`
-
-## 上传到 GitHub（不上传数据）
-
-- 不要提交 `data/input/`、`data/output/`、`.venv/`
-- 只提交工具代码和文档
-
-常见命令：
-
-```bash
-git init
-git add README.md README.en.md .gitignore requirements.txt scripts/ data/input/.gitkeep data/output/.gitkeep
-git commit -m "Add DXF to PDF toolkit"
-```
 
 ## 已知限制
 

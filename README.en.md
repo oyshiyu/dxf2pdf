@@ -37,7 +37,7 @@ dxf-to-pdf-toolkit/
 ### 1. Create and activate virtual environment
 
 ```bash
-cd /path/to/dxf-to-pdf-toolkit
+cd /path/to/dxf2pdf
 python3 -m venv .venv
 ./.venv/bin/python -m pip install --upgrade pip
 ./.venv/bin/pip install -r requirements.txt
@@ -84,13 +84,13 @@ python3 -m venv .venv
 ### 1. Create virtual environment and install dependencies
 
 ```bat
-cd /d C:\path\to\dxf-to-pdf-toolkit
-py -3 -m venv .venv
+cd /d C:\path\to\dxf2pdf
+python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\pip install -r requirements.txt
 ```
 
-If `py` is not available, replace `py -3` with `python`.
+If `python` is not found, install Python and make sure it is added to `PATH`.
 
 ### 2. Optional environment check
 
@@ -113,8 +113,8 @@ If `py` is not available, replace `py -3` with `python`.
 ## Quick Start (Windows PowerShell)
 
 ```powershell
-cd C:\path\to\dxf-to-pdf-toolkit
-py -3 -m venv .venv
+cd C:\path\to\dxf2pdf
+python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\pip install -r requirements.txt
 .\.venv\Scripts\python .\scripts\batch_cad_to_pdf.py ".\data\input" -o ".\data\output" --layout modelspace --bg "#FFFFFF" --fg "#000000" --mtext-line-spacing-scale 1.15 --mtext-smart-wrap-cjk-collision --mtext-smart-wrap-cjk-chars 10 --force
@@ -157,19 +157,6 @@ Examples:
 - Batch mode: PDFs written to the output folder
 - Batch mode also writes a summary JSON:
   - `cad2pdf_batch_summary_YYYYMMDD_HHMMSS.json`
-
-## Publishing to GitHub (No Data)
-
-- Do not commit `data/input/`, `data/output/`, or `.venv/`
-- Keep only the toolkit code and documentation
-
-Typical commands:
-
-```bash
-git init
-git add README.md README.en.md .gitignore requirements.txt scripts/ data/input/.gitkeep data/output/.gitkeep
-git commit -m "Add DXF to PDF toolkit"
-```
 
 ## Known Limitations
 
