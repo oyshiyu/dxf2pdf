@@ -5,7 +5,7 @@
 - English
 - [中文](./README.md)
 
-A lightweight toolkit for converting `.dxf` CAD drawings to PDF using Python scripts (command-line workflow). It supports both single-file and batch conversion and includes collision-triggered wrapping for dense Chinese MTEXT labels.
+A lightweight toolkit for converting `.dxf` CAD drawings to PDF using Python scripts. It supports both single-file and batch conversion and includes collision-triggered wrapping for dense Chinese MTEXT labels.
 
 ## Features
 
@@ -13,7 +13,6 @@ A lightweight toolkit for converting `.dxf` CAD drawings to PDF using Python scr
 - Batch conversion for folders
 - Searchable PDF text layer by default (selectable/searchable in tools like Adobe Acrobat)
 - Collision-triggered wrapping for Chinese MTEXT labels (reduces overlap between adjacent labels)
-- Data-free repository structure (`data/input`, `data/output`)
 
 ## Project Structure
 
