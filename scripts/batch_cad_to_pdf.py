@@ -152,6 +152,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Overwrite existing PDFs",
     )
     parser.add_argument(
+        "--searchable-text-layer",
+        dest="searchable_text_layer",
+        action="store_true",
+        default=True,
+        help=(
+            "Add an extractable text layer to output PDF (enabled by default). "
+            "Use --no-searchable-text-layer to disable."
+        ),
+    )
+    parser.add_argument(
+        "--no-searchable-text-layer",
+        dest="searchable_text_layer",
+        action="store_false",
+        help="Disable searchable PDF text layer and render text as vector paths.",
+    )
+    parser.add_argument(
         "--skip-existing",
         action="store_true",
         help="Skip files whose target PDF already exists",
@@ -250,6 +266,7 @@ def main() -> int:
             font_family=args.font_family,
             font_file=font_file,
             force=args.force,
+            searchable_text_layer=args.searchable_text_layer,
         )
         if rc == 0:
             stats.success += 1

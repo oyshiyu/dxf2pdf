@@ -11,6 +11,7 @@
 
 - 单文件 DXF 转 PDF
 - 批量转换文件夹
+- 默认输出可搜索文字层（可被 Adobe Acrobat 等工具检索/选中）
 - 中文 MTEXT 碰撞触发换行（减少相邻标签横向重叠）
 - 仓库默认不包含业务数据（使用 `data/input`、`data/output`）
 
@@ -141,6 +142,7 @@ python -m venv .venv
 - `--size-inches 11x17`：指定画布尺寸
 - `--font-family "Microsoft YaHei,SimSun"`：指定中文字体优先级
 - `--font-file "C:\Windows\Fonts\msyh.ttc"`：注册字体文件（字体未被 matplotlib 识别时）
+- `--no-searchable-text-layer`：关闭可搜索文字层（改为轮廓文字）
 
 示例：
 

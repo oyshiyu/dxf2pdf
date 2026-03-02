@@ -11,6 +11,7 @@ A lightweight toolkit for converting `.dxf` CAD drawings to PDF using Python scr
 
 - Single-file DXF to PDF conversion
 - Batch conversion for folders
+- Searchable PDF text layer by default (selectable/searchable in tools like Adobe Acrobat)
 - Collision-triggered wrapping for Chinese MTEXT labels (reduces overlap between adjacent labels)
 - Data-free repository structure (`data/input`, `data/output`)
 
@@ -141,6 +142,7 @@ Note:
 - `--size-inches 11x17` Set canvas size
 - `--font-family "Microsoft YaHei,SimSun"` Set preferred CJK font fallback order
 - `--font-file "C:\Windows\Fonts\msyh.ttc"` Register a font file if matplotlib does not detect it
+- `--no-searchable-text-layer` Disable searchable text layer (render text as vector outlines)
 
 Examples:
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 from typing import Optional, Tuple
@@ -14,6 +15,8 @@ INSTALL_HINT = (
     "  python3 -m venv .cad2pdf-venv\n"
     "  ./.cad2pdf-venv/bin/pip install ezdxf matplotlib"
 )
+
+TEXT_ENTITY_TYPES = {"TEXT", "MTEXT", "ATTRIB", "ATTDEF"}
 
 
 def parse_size_inches(text: str) -> Tuple[float, float]:
@@ -236,6 +239,156 @@ def configure_matplotlib_fonts(
         )
 
 
+def configure_matplotlib_pdf_font_embedding() -> None:
+    """Prefer embedded TrueType fonts in PDF so text remains extractable."""
+    try:
+        import matplotlib  # type: ignore
+    except ImportError as exc:  # pragma: no cover - runtime environment dependent
+        raise RuntimeError(INSTALL_HINT) from exc
+
+    matplotlib.rcParams["pdf.fonttype"] = 42
+    matplotlib.rcParams["ps.fonttype"] = 42
+    matplotlib.rcParams["pdf.use14corefonts"] = False
+    matplotlib.rcParams["axes.unicode_minus"] = False
+
+
+def data_distance_to_points(ax, dpi: int, x1: float, y1: float, x2: float, y2: float) -> float:
+    p1 = ax.transData.transform((x1, y1))
+    p2 = ax.transData.transform((x2, y2))
+    pixels = math.hypot(float(p2[0] - p1[0]), float(p2[1] - p1[1]))
+    if dpi <= 0:
+        return 1.0
+    return max(1.0, pixels * 72.0 / float(dpi))
+
+
+def add_searchable_text_layer(ax, layout, render_ctx) -> int:
+    """Overlay an extractable PDF text layer over the regular rendered output."""
+    from ezdxf import disassemble  # type: ignore
+    from ezdxf.addons.drawing.text import simplified_text_chunks  # type: ignore
+    from ezdxf.addons.drawing.unified_text_renderer import UnifiedTextRenderer  # type: ignore
+    from ezdxf.math import Vec3  # type: ignore
+
+    text_engine = UnifiedTextRenderer()
+    count = 0
+    dpi = int(ax.figure.dpi)
+
+    for entity in disassemble.recursive_decompose(layout):
+        if entity.dxftype() not in TEXT_ENTITY_TYPES:
+            continue
+
+        try:
+            props = render_ctx.resolve_all(entity)
+            chunks = simplified_text_chunks(
+                entity,
+                text_engine,
+                font_face=props.font,
+            )
+        except Exception:
+            continue
+
+        font_family = getattr(getattr(props, "font", None), "family", None)
+
+        for line, transform, cap_height in chunks:
+            if not isinstance(line, str) or not line.strip():
+                continue
+
+            origin = transform.transform(Vec3(0, 0, 0))
+            dir_x = transform.transform(Vec3(1, 0, 0))
+            cap_top = transform.transform(Vec3(0, cap_height, 0))
+
+            rotation_deg = math.degrees(
+                math.atan2(float(dir_x.y - origin.y), float(dir_x.x - origin.x))
+            )
+            fontsize_pt = data_distance_to_points(
+                ax,
+                dpi,
+                float(origin.x),
+                float(origin.y),
+                float(cap_top.x),
+                float(cap_top.y),
+            )
+
+            text_kwargs = {
+                "x": float(origin.x),
+                "y": float(origin.y),
+                "s": line,
+                "fontsize": fontsize_pt,
+                "rotation": rotation_deg,
+                "rotation_mode": "anchor",
+                "ha": "left",
+                "va": "baseline",
+                # Keep this layer invisible to preserve the original visual output
+                # while adding extractable text content to the PDF.
+                "color": "#000000",
+                "alpha": 0.0,
+                "clip_on": True,
+                "zorder": 100,
+            }
+            if isinstance(font_family, str) and font_family:
+                text_kwargs["fontfamily"] = font_family
+
+            ax.text(**text_kwargs)
+            count += 1
+
+    return count
+
+
+def export_pdf_with_optional_text_layer(
+    layout,
+    output_path: Path,
+    *,
+    dpi: int,
+    bg: Optional[str],
+    fg: Optional[str],
+    size_inches: Optional[Tuple[float, float]],
+    searchable_text_layer: bool,
+) -> int:
+    from ezdxf.addons.drawing import matplotlib as ezdxf_mpl  # type: ignore
+    from ezdxf.addons.drawing.config import Configuration  # type: ignore
+    from ezdxf.addons.drawing.frontend import Frontend  # type: ignore
+    from ezdxf.addons.drawing.matplotlib import MatplotlibBackend  # type: ignore
+    from ezdxf.addons.drawing.properties import (  # type: ignore
+        LayoutProperties,
+        RenderContext,
+    )
+    import matplotlib  # type: ignore
+    import matplotlib.pyplot as plt  # type: ignore
+
+    old_backend = matplotlib.get_backend()
+    matplotlib.use("agg")
+    try:
+        fig: plt.Figure = plt.figure(dpi=dpi)
+        ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
+        render_ctx = RenderContext(layout.doc)
+        layout_properties = LayoutProperties.from_layout(layout)
+        if bg is not None:
+            layout_properties.set_colors(bg, fg)
+
+        config = Configuration()
+
+        out = MatplotlibBackend(ax)
+        Frontend(render_ctx, out, config).draw_layout(
+            layout,
+            finalize=True,
+            layout_properties=layout_properties,
+        )
+
+        if size_inches is not None:
+            ratio = ezdxf_mpl._get_aspect_ratio(ax)
+            w, h = ezdxf_mpl._get_width_height(ratio, size_inches[0], size_inches[1])
+            fig.set_size_inches(w, h, True)
+
+        text_items = 0
+        if searchable_text_layer:
+            text_items = add_searchable_text_layer(ax, layout, render_ctx)
+
+        fig.savefig(output_path, dpi=dpi, facecolor=ax.get_facecolor(), transparent=True)
+        plt.close(fig)
+        return text_items
+    finally:
+        matplotlib.use(old_backend)
+
+
 def list_layouts(doc) -> list[str]:
     names = []
     for name in doc.layout_names_in_taborder():
@@ -393,6 +546,22 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Overwrite an existing output PDF",
     )
+    parser.add_argument(
+        "--searchable-text-layer",
+        dest="searchable_text_layer",
+        action="store_true",
+        default=True,
+        help=(
+            "Add an extractable text layer to output PDF (enabled by default). "
+            "Use --no-searchable-text-layer to disable."
+        ),
+    )
+    parser.add_argument(
+        "--no-searchable-text-layer",
+        dest="searchable_text_layer",
+        action="store_false",
+        help="Disable searchable PDF text layer and render text as vector paths.",
+    )
     return parser
 
 
@@ -414,8 +583,9 @@ def convert_dxf(
     font_family: Optional[str],
     font_file: Optional[Path],
     force: bool,
+    searchable_text_layer: bool,
 ) -> int:
-    ezdxf, ezdxf_mpl = ensure_dxf_dependencies()
+    ezdxf, _ = ensure_dxf_dependencies()
 
     try:
         doc = ezdxf.readfile(input_path)
@@ -484,17 +654,23 @@ def convert_dxf(
             font_family_spec=font_family,
             font_file=font_file,
         )
+        if searchable_text_layer:
+            configure_matplotlib_pdf_font_embedding()
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 4
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 7
     try:
-        ezdxf_mpl.qsave(
+        text_items = export_pdf_with_optional_text_layer(
             layout,
-            output_path,
+            output_path=output_path,
             dpi=dpi,
             bg=effective_bg,
             fg=fg,
             size_inches=size_inches,
+            searchable_text_layer=searchable_text_layer,
         )
     except Exception as exc:
         print(f"PDF export failed: {exc}", file=sys.stderr)
@@ -502,6 +678,8 @@ def convert_dxf(
 
     size = output_path.stat().st_size if output_path.exists() else 0
     print(f"Exported PDF: {output_path} ({size} bytes)")
+    if searchable_text_layer:
+        print(f"Searchable text layer entries: {text_items}")
     return 0
 
 
@@ -804,6 +982,7 @@ def main() -> int:
             font_family=args.font_family,
             font_file=(Path(args.font_file).expanduser() if args.font_file else None),
             force=args.force,
+            searchable_text_layer=args.searchable_text_layer,
         )
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
